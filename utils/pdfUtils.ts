@@ -149,6 +149,40 @@ const drawMicroscope = (doc: jsPDF, x: number, y: number, scale: number) => {
   doc.line(x - 3 * scale, y + 4 * scale, x + 4 * scale, y + 4 * scale);
 };
 
+const drawCheckBadge = (doc: jsPDF, x: number, y: number, scale: number) => {
+  const radius = 6 * scale;
+  doc.setDrawColor(6, 182, 212);
+  doc.setFillColor(8, 51, 68);
+  doc.circle(x, y, radius, 'F');
+
+  doc.setDrawColor(236, 254, 255);
+  doc.setLineWidth(1.5 * scale);
+  doc.line(x - 2 * scale, y, x - 0.2 * scale, y + 2 * scale);
+  doc.line(x - 0.2 * scale, y + 2 * scale, x + 3 * scale, y - 2 * scale);
+};
+
+const drawSparkle = (doc: jsPDF, x: number, y: number, scale: number) => {
+  doc.setDrawColor(94, 234, 212);
+  doc.setFillColor(16, 185, 129);
+  doc.setLineWidth(0.6 * scale);
+
+  doc.circle(x, y, 1.6 * scale, 'F');
+  doc.line(x - 3 * scale, y, x + 3 * scale, y);
+  doc.line(x, y - 3 * scale, x, y + 3 * scale);
+};
+
+const drawSeal = (doc: jsPDF, x: number, y: number, scale: number) => {
+  doc.setDrawColor(8, 47, 73);
+  doc.setFillColor(6, 182, 212);
+  doc.circle(x, y, 12 * scale, 'FD');
+  doc.setFillColor(255, 255, 255);
+  doc.circle(x, y, 8 * scale, 'F');
+
+  doc.setTextColor(8, 47, 73);
+  doc.setFontSize(9 * scale);
+  doc.text('BGP', x, y + 3 * scale, { align: 'center' });
+};
+
 // ---------- Main generator ----------
 
 export const generateCertificatePDF = async (data: CertificateInput) => {
@@ -180,6 +214,14 @@ export const generateCertificatePDF = async (data: CertificateInput) => {
   const pageHeight = doc.internal.pageSize.getHeight();
   const centerX = pageWidth / 2;
 
+  const palette = {
+    deep: { r: 8, g: 47, b: 73 },
+    accent: { r: 6, g: 182, b: 212 },
+    ink: { r: 15, g: 23, b: 42 },
+    muted: { r: 71, g: 85, b: 105 },
+    soft: { r: 241, g: 245, b: 249 },
+  };
+
   // Optional fields with professional defaults
   const institution = data.institution ?? 'Tıpta Profesyonellik Bloğu';
   const unit = data.departmentOrUnit ?? 'Bilimsel Araştırmalar ve Uygulamalar';
@@ -188,9 +230,15 @@ export const generateCertificatePDF = async (data: CertificateInput) => {
   const location = data.location ?? '';
   const certificateNo = data.certificateNo ?? '';
 
-  // Background
+  // Background layers
   doc.setFillColor(255, 255, 255);
   doc.rect(0, 0, pageWidth, pageHeight, 'F');
+
+  doc.setFillColor(240, 253, 250);
+  doc.rect(10, 12, pageWidth - 20, pageHeight - 24, 'F');
+
+  doc.setFillColor(255, 255, 255);
+  doc.roundedRect(14, 16, pageWidth - 28, pageHeight - 32, 6, 6, 'F');
 
   // Borders
   doc.setDrawColor(8, 51, 68);
@@ -202,46 +250,54 @@ export const generateCertificatePDF = async (data: CertificateInput) => {
   doc.rect(12, 12, pageWidth - 24, pageHeight - 24);
 
   // Decorations
-  drawDNAHelix(doc, 20, 35, 120, 0.9);
-  drawDNAHelix(doc, pageWidth - 35, 35, 120, 0.9);
+  drawDNAHelix(doc, 22, 38, 118, 0.9);
+  drawDNAHelix(doc, pageWidth - 38, 38, 118, 0.9);
 
-  drawAtom(doc, 22, 22, 1.3);
-  drawAtom(doc, pageWidth - 22, 22, 1.3);
-  drawAtom(doc, 22, pageHeight - 22, 1.3);
-  drawAtom(doc, pageWidth - 22, pageHeight - 22, 1.3);
+  drawAtom(doc, 26, 24, 1.2);
+  drawAtom(doc, pageWidth - 26, 24, 1.2);
+  drawAtom(doc, 26, pageHeight - 26, 1.2);
+  drawAtom(doc, pageWidth - 26, pageHeight - 26, 1.2);
+
+  // Header band
+  doc.setFillColor(palette.deep.r, palette.deep.g, palette.deep.b);
+  doc.rect(20, 24, pageWidth - 40, 20, 'F');
+  doc.setFillColor(palette.accent.r, palette.accent.g, palette.accent.b);
+  doc.rect(20, 44, pageWidth - 40, 1.2, 'F');
 
   // Header emblem
   doc.setDrawColor(22, 78, 99);
   doc.setFillColor(255, 255, 255);
   doc.setLineWidth(1);
-  doc.circle(centerX, 36, 12, 'FD');
-  drawMicroscope(doc, centerX, 36, 0.9);
+  doc.circle(centerX, 36, 11, 'FD');
+  drawMicroscope(doc, centerX, 36, 0.85);
+  drawSparkle(doc, centerX - 16, 32, 1);
+  drawSparkle(doc, centerX + 16, 40, 0.9);
 
   // Institution lines
   doc.setFontSize(12);
   doc.setTextColor(51, 65, 85);
   setFont('normal');
-  doc.text(t(institution), centerX, 55, { align: 'center' });
+  doc.text(t(institution), centerX, 60, { align: 'center' });
 
   doc.setFontSize(10.5);
   doc.setTextColor(100, 116, 139);
-  doc.text(t(unit), centerX, 61, { align: 'center' });
+  doc.text(t(unit), centerX, 66, { align: 'center' });
 
   // Title
   setFont('bold');
   doc.setFontSize(32);
   doc.setTextColor(22, 78, 99);
-  doc.text(t('GÖNÜLLÜ KATILIM SERTİFİKASI'), centerX, 78, { align: 'center' });
+  doc.text(t('BİLİMSEL GÖNÜLLÜLÜK SERTİFİKASI'), centerX, 82, { align: 'center' });
 
   // Intro paragraph
   setFont('normal');
-  doc.setFontSize(14);
+  doc.setFontSize(13.5);
   doc.setTextColor(51, 65, 85);
 
-  const introRaw = 'Bu sertifika, yürütülen bilimsel çalışmalara gönüllü katılımı ve sunduğu değerli katkılar nedeniyle aşağıda adı yazılı katılımcıya takdim edilmiştir.';
+  const introRaw = 'Bu belge, topluluk bilim çalışmalarımıza gösterdiğiniz özenli katkıları ve bilimsel etik ilkelere bağlı gönüllü emeğinizi onurlandırmak amacıyla düzenlenmiştir.';
   const intro = t(introRaw);
   const introLines = doc.splitTextToSize(intro, pageWidth - 90);
-  doc.text(introLines, centerX, 92, { align: 'center', lineHeightFactor: 1.45 });
+  doc.text(introLines, centerX, 98, { align: 'center', lineHeightFactor: 1.35 });
 
   // Name (dynamic sizing)
   // We use standard toLocaleUpperCase. 
@@ -252,51 +308,107 @@ export const generateCertificatePDF = async (data: CertificateInput) => {
   setFont('bold');
   doc.setTextColor(15, 23, 42);
 
-  let nameFontSize = 40;
+  let nameFontSize = 38;
   doc.setFontSize(nameFontSize);
 
-  const maxNameWidth = pageWidth - 90;
+  const maxNameWidth = pageWidth - 110;
   while (doc.getTextWidth(cleanName) > maxNameWidth && nameFontSize > 20) {
     nameFontSize -= 2;
     doc.setFontSize(nameFontSize);
   }
 
-  const nameY = 122;
+  const nameY = 114;
   doc.text(cleanName, centerX, nameY, { align: 'center' });
 
   // Underline
-  doc.setDrawColor(203, 213, 225);
-  doc.setLineWidth(0.5);
-  doc.line(centerX - 55, nameY + 8, centerX + 55, nameY + 8);
+  doc.setDrawColor(palette.accent.r, palette.accent.g, palette.accent.b);
+  doc.setLineWidth(1);
+  doc.line(centerX - 60, nameY + 8, centerX + 60, nameY + 8);
 
   // Optional impact message
   const impactRaw = (data.impactMessage ?? '').trim();
   const impactTextBase = impactRaw.length > 0
       ? impactRaw
-      : 'Katkılarınız, araştırma sürecimizin niteliğini ve güvenilirliğini güçlendirmiştir.';
+      : 'Katkılarınız; veri doğruluğu, topluluk katılımı ve bilimsel sürecin güvenilirliği için önemli bir fark yarattı.';
   
   const impactText = t(impactTextBase);
 
   setFont('normal');
   doc.setFontSize(12.5);
-  doc.setTextColor(71, 85, 105);
-
-  const impactLines = doc.splitTextToSize(impactText, pageWidth - 100);
-  const impactY = 142;
-  doc.text(impactLines, centerX, impactY, { align: 'center', lineHeightFactor: 1.5 });
-
-  // Closing line
-  doc.setFontSize(12.5);
   doc.setTextColor(51, 65, 85);
-  const closingRaw = 'Sayın katılımcımıza teşekkür eder, akademik ve mesleki yaşamında başarılarının devamını dileriz.';
+
+  const boxX = 32;
+  const boxY = 124;
+  const boxWidth = pageWidth - 64;
+  const contentWidth = boxWidth - 20;
+  const impactLines = doc.splitTextToSize(impactText, contentWidth);
+  const impactHeight = impactLines.length * 4.8 + 12;
+
+  doc.setFillColor(236, 254, 255);
+  doc.roundedRect(boxX, boxY, boxWidth, impactHeight, 4, 4, 'F');
+  doc.setDrawColor(6, 182, 212);
+  doc.setLineWidth(0.6);
+  doc.roundedRect(boxX, boxY, boxWidth, impactHeight, 4, 4, 'S');
+
+  setFont('bold');
+  doc.setFontSize(12);
+  doc.setTextColor(palette.deep.r, palette.deep.g, palette.deep.b);
+  doc.text(t('Gönüllü Etki Notu'), boxX + 10, boxY + 10);
+
+  setFont('normal');
+  doc.setFontSize(11.5);
+  doc.setTextColor(51, 65, 85);
+  doc.text(impactLines, centerX, boxY + 18, { align: 'center', lineHeightFactor: 1.45 });
+
+  // Highlights section
+  const highlights = [
+    {
+      title: 'Özenli iş birliği',
+      detail: 'Veri paylaşımında şeffaf kalıp ekip iletişimini güçlendirdiniz.'
+    },
+    {
+      title: 'Etik duyarlılık',
+      detail: 'Gizlilik ve güvenilirlik ilkelerini kararlılıkla gözetiyorsunuz.'
+    }
+  ];
+
+  let highlightY = boxY + impactHeight + 12;
+  setFont('bold');
+  doc.setFontSize(12);
+  doc.setTextColor(palette.deep.r, palette.deep.g, palette.deep.b);
+  doc.text(t('Öne Çıkan Katkılar'), boxX + 4, highlightY);
+
+  setFont('normal');
+  doc.setFontSize(11);
+  doc.setTextColor(palette.muted.r, palette.muted.g, palette.muted.b);
+  highlightY += 6;
+
+  highlights.forEach((item) => {
+    drawCheckBadge(doc, boxX + 8, highlightY + 2, 1);
+    setFont('bold');
+    doc.setTextColor(palette.ink.r, palette.ink.g, palette.ink.b);
+    doc.text(t(item.title), boxX + 18, highlightY + 2);
+
+    setFont('normal');
+    doc.setTextColor(71, 85, 105);
+    const detailLines = doc.splitTextToSize(t(item.detail), pageWidth - 110);
+    doc.text(detailLines, boxX + 18, highlightY + 8, { lineHeightFactor: 1.35 });
+
+    highlightY += detailLines.length * 4 + 6;
+  });
+
+  // Closing line with seal
+  drawSeal(doc, pageWidth - 34, highlightY - 6, 0.85);
+  setFont('normal');
+  doc.setFontSize(11.5);
+  doc.setTextColor(51, 65, 85);
+  const closingRaw = 'Bilimsel gönüllülük yolculuğunuz, sürdürülebilir bilgi üretimi ve topluluk bilimi için ilham verici bir örnek oluşturuyor.';
   const closing = t(closingRaw);
-  
-  const closingY = impactY + impactLines.length * 7.2 + 8;
-  const closingLines = doc.splitTextToSize(closing, pageWidth - 90);
-  doc.text(closingLines, centerX, closingY, { align: 'center', lineHeightFactor: 1.35 });
+  const closingLines = doc.splitTextToSize(closing, pageWidth - 60);
+  doc.text(closingLines, centerX, highlightY + 4, { align: 'center', lineHeightFactor: 1.3 });
 
   // Footer
-  const footerY = pageHeight - 28;
+  const footerY = pageHeight - 18;
 
   // Left: location + date + certificate no
   setFont('normal');
